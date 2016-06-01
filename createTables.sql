@@ -21,7 +21,7 @@ CREATE TABLE Notes (
    id INT NOT NULL AUTO_INCREMENT,
    user INT,
    noteText BLOB,
-   lastModified DATE,
+   lastModified TIMESTAMP,
    title VARCHAR(64),
    PRIMARY KEY(id),
    FOREIGN KEY (user) REFERENCES Users(id)
