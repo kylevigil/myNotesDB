@@ -3,7 +3,16 @@ import BaseHTTPServer
 import SocketServer
 import cgi
 import logging
+import sys
+import json
 from createQuery import *
+
+#sys.stdout = open('logs.txt', 'w')
+#sys.stderr = open('logs.txt', 'w')
+
+def toJSON(cur):
+    json_string = [dict((cur.description[i][0], value) for i, value in enumerate(row)) for row in cur.fetchall()]
+    return json.dumps(json_string)
 
 PORT = 8888
 
@@ -44,18 +53,40 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
         method = postvars['method'][0]
         print method
-
-        if method == "addNote":
-            json = addNote(postvars)
+        
+        isUser = checkUser(postvars['username'][0], postvars['passHash'][0])
+        print isUser
+        
+        if method == "login":
+            validUsername = checkUsername(postvars['username'][0])
+            if isUser: # is a user
+                json = '{"status" : 0}'
+            elif not validUsername: #is not a user but can create account
+                json = '{"status" : 1}'
+            else: #wrong password/username already taken
+                json = '{"status" : 2}'
         elif method == "addUser":
-            print 'called addUser'
-            json = addUser(postvars)
+            json = ""
+            addUser(postvars)
+        elif not isUser: #Dont allow other function calls unless valid user
+            json = '{"status" : "failure"}'
+        elif method == "addNote":
+            json = ""
+            print "ADDNOTE"
+            addNote(postvars)
         elif method == "modifyNote":
-            json = modifyNote(postvars)
+            json = ""
+            modifyNote(postvars)
         elif method == "deleteNote":
-            json = deleteNote(postvars)
+            json = ""
+            deleteNote(postvars)
         elif method == "getNotes":
-            json = getNotes(postvars)
+            print "GETNOTES"
+            json = toJSON(getNotes(postvars))
+        elif method == "getNote":
+            json = toJSON(getNote(postvars))
+        elif method == "search":
+            json = toJSON(search(postvars))
         else:
             json = "{nothing: 'else'}"
       

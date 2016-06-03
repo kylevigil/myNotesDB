@@ -4,11 +4,10 @@ DROP TABLE IF EXISTS Tags;
 DROP TABLE IF EXISTS Users;
 
 CREATE TABLE Users (
-   id INT NOT NULL AUTO_INCREMENT,
-   username VARCHAR(32),
-   salt CHAR(6),
-   passHash CHAR(32),
-   PRIMARY KEY(id)
+   username VARCHAR(32) NOT NULL,
+   salt CHAR(29),
+   passHash CHAR(60),
+   PRIMARY KEY(username)
 );
 
 CREATE TABLE Tags (
@@ -19,12 +18,12 @@ CREATE TABLE Tags (
 
 CREATE TABLE Notes (
    id INT NOT NULL AUTO_INCREMENT,
-   user INT,
+   user VARCHAR(32),
    noteText BLOB,
    lastModified TIMESTAMP,
    title VARCHAR(64),
    PRIMARY KEY(id),
-   FOREIGN KEY (user) REFERENCES Users(id)
+   FOREIGN KEY (user) REFERENCES Users(username)
 );
 
 CREATE TABLE NoteTags (
@@ -34,10 +33,10 @@ CREATE TABLE NoteTags (
    FOREIGN KEY(tag) REFERENCES Tags(id)
 );
 
-INSERT INTO Users(username, salt, passHash)
- VALUES 
-   ('george', 'ABC123', 'h32ouih32uhs3h1b123456789012345u'),
-   ('jake', 'ABC123', 'h32ouih32uhs3h1b123456789012345u'),
-   ('kyle', 'ABC123', 'h32ouih32uhs3h1b123456789012345u'),
-   ('eriq', 'ABC123', 'h32ouih32uhs3h1b123456789012345u')
-;
+-- INSERT INTO Users(username, salt, passHash)
+-- VALUES 
+--   ('george', 'ABC123', 'h32ouih32uhs3h1b123456789012345u'),
+--   ('jake', 'ABC123', 'h32ouih32uhs3h1b123456789012345u'),
+--   ('kyle', 'ABC123', 'h32ouih32uhs3h1b123456789012345u'),
+--   ('eriq', 'ABC123', 'h32ouih32uhs3h1b123456789012345u')
+-- ;
