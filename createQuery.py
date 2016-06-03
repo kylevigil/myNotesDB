@@ -77,8 +77,8 @@ def deleteNote(postvars):
 
 def getNotes(postvars):
     query = "SELECT N.id, title, T.tag FROM Notes N\
-            JOIN NoteTags NT ON NT.note = N.id \
-            JOIN Tags T ON T.id = NT.tag \
+            LEFT JOIN NoteTags NT ON NT.note = N.id \
+            LEFT JOIN Tags T ON T.id = NT.tag \
             WHERE user = %s ORDER BY lastModified DESC;"
     args = [postvars['username'][0]]
     return db_query(query, args)
