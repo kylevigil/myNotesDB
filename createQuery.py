@@ -76,10 +76,11 @@ def deleteNote(postvars):
     
 
 def getNotes(postvars):
-    query = "SELECT N.id, title, T.tag FROM Notes N\
+    query = "SELECT N.id, title, GROUP_CONCAT(T.tag SEPARATOR ' ') AS tags FROM Notes N\
             LEFT JOIN NoteTags NT ON NT.note = N.id \
             LEFT JOIN Tags T ON T.id = NT.tag \
-            WHERE user = %s ORDER BY lastModified DESC;"
+            WHERE user = %s GROUP BY N.id, title \
+            ORDER BY lastModified DESC;"
     args = [postvars['username'][0]]
     return db_query(query, args)
 
@@ -90,11 +91,18 @@ def getNote(postvars):
     return db_query(query, args)
 
 def search(postvars):
-    query = "SELECT id, title FROM Notes \
-            WHERE title LIKE %s \
-            OR noteText LIKE '%%s%' \
-            ;"
-    args = [postvars['string'][0]]
+    query = "SELECT N.id, title, GROUP_CONCAT(T.tag SEPARATOR ' ') AS tags FROM Notes N\
+            LEFT JOIN NoteTags NT ON NT.note = N.id \
+            LEFT JOIN Tags T ON T.id = NT.tag \
+            WHERE user = %s \
+            AND (title LIKE %s \
+            OR noteText LIKE %s) \
+            GROUP BY N.id, title \
+            ORDER BY lastModified DESC;"
+    likeString = '%' + postvars['string'][0] + '%'
+    args = [postvars['username'][0], likeString, likeString]
+    print query
+    print args
     return db_query(query, args)
     
 
