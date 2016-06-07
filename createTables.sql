@@ -33,10 +33,3 @@ CREATE TABLE NoteTags (
    FOREIGN KEY(tag) REFERENCES Tags(id)
 );
 
--- INSERT INTO Users(username, salt, passHash)
--- VALUES 
---   ('george', 'ABC123', 'h32ouih32uhs3h1b123456789012345u'),
---   ('jake', 'ABC123', 'h32ouih32uhs3h1b123456789012345u'),
---   ('kyle', 'ABC123', 'h32ouih32uhs3h1b123456789012345u'),
---   ('eriq', 'ABC123', 'h32ouih32uhs3h1b123456789012345u')
--- ;

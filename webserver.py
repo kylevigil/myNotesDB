@@ -7,9 +7,6 @@ import sys
 import json
 from createQuery import *
 
-#sys.stdout = open('logs.txt', 'w')
-#sys.stderr = open('logs.txt', 'w')
-
 def toJSON(cur):
     json_string = [dict((cur.description[i][0], value) for i, value in enumerate(row)) for row in cur.fetchall()]
     return json.dumps(json_string)
@@ -30,12 +27,6 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         s.send_header("Content-type", "application/json; charset=utf-8")
         s.end_headers()
 
-          
-
-
-        s.wfile.write("<html><head><title>Title goes here.</title></head>")
-        s.wfile.write("<body><p>This is a test.</p>")
-        s.wfile.write(s.path)
     #Use post for anything that updates the database
     def do_POST(s):
         s.send_response(200)
@@ -52,10 +43,8 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
      
 
         method = postvars['method'][0]
-        print method
         
         isUser = checkUser(postvars['username'][0], postvars['passHash'][0])
-        print isUser
         
         if method == "login":
             validUsername = checkUsername(postvars['username'][0])
@@ -81,7 +70,6 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             json = ""
             deleteNote(postvars)
         elif method == "getNotes":
-            print "GETNOTES"
             json = toJSON(getNotes(postvars))
         elif method == "getNote":
             json = toJSON(getNote(postvars))
@@ -90,13 +78,6 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         else:
             json = "{nothing: 'else'}"
       
-        if len(postvars):
-            i = 0
-            for key in sorted(postvars):
-                #Uncomment to check parameters being passed 
-                print 'ARG[%d] %s=%s' % (i, key, postvars[key])
-                i += 1
-
         s.wfile.write(json)
 
 httpd = SocketServer.TCPServer(("", PORT), MyHandler)

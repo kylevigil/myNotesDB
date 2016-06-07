@@ -1,14 +1,12 @@
 from dbConnector import *
 import bcrypt
+import re
 
 def checkUsername(username):
     query = "SELECT COUNT(*) FROM Users WHERE username = %s"
     args = [username]
     tempResult = db_query(query, args).fetchall()
-    #print "!!!" + tempResult
     result = int(tempResult[0][0])
-    print result
-    print "result"
     if result >= 1:
         return True
     return False
@@ -18,13 +16,10 @@ def checkUser(username, passHash):
         query = "SELECT COUNT(*) FROM Users WHERE username = %s \
             AND passHash = %s;"
         salt = db_query("SELECT salt FROM Users WHERE username = %s;", username)
-        #print salt[0][0]
         salt = salt.fetchall()
         newPassHash = bcrypt.hashpw(passHash, salt[0][0])
-        print "hi " + newPassHash
         args = [username, newPassHash]
         tempResult = db_query(query, args).fetchall()
-       # print "***" + db_query(query, args)
         result = int(tempResult[0][0])
         if result >= 1:
             return True
@@ -34,9 +29,7 @@ def addUser(postvars):
     query = "INSERT INTO Users(username, salt, passHash) \
             VALUES (%s, %s, %s);"
     salt = bcrypt.gensalt()
-    print "salt: " + salt
     newPassHash = bcrypt.hashpw(postvars['passHash'][0], salt)
-    print "newPassHash: " + newPassHash
     args = [postvars['username'][0], salt, newPassHash]
     return db_query(query, args)
 
@@ -45,12 +38,8 @@ def addNote(postvars):
             VALUES (%s, %s, NOW(), %s);"
     args = [postvars['username'][0], postvars['noteText'][0], postvars['title'][0]]
 
-    #cur = db_query(query, args)
-    #print db_query("SELECT LAST_INSERT_ID();", []).fetchall()
-    #noteID = int(db_query("SELECT LAST_INSERT_ID();", []).fetchall()[0][0])
     noteID = db_query_return_id(query, args)
     parseTags(postvars['noteText'][0], noteID)
-    #return cur
    
 def modifyNote(postvars):
     query = "UPDATE Notes SET noteText = %s, title = %s, lastModified = NOW() \
@@ -61,7 +50,6 @@ def modifyNote(postvars):
     noteID = postvars['id'][0]
     #Need to delete previous tags for this note
     db_query("DELETE FROM NoteTags WHERE note = %s", [noteID])
-    #db_query("DELETE FROM Tags WHERE note = %s", [noteID])
 
     parseTags(postvars['noteText'][0], postvars['id'][0])
     return db_query(query, args)
@@ -95,14 +83,12 @@ def search(postvars):
             LEFT JOIN NoteTags NT ON NT.note = N.id \
             LEFT JOIN Tags T ON T.id = NT.tag \
             WHERE user = %s \
-            AND (title LIKE %s \
-            OR noteText LIKE %s) \
+            AND (LOWER(title) LIKE LOWER(%s) \
+            OR LOWER(noteText) LIKE LOWER(%s)) \
             GROUP BY N.id, title \
             ORDER BY lastModified DESC;"
     likeString = '%' + postvars['string'][0] + '%'
     args = [postvars['username'][0], likeString, likeString]
-    print query
-    print args
     return db_query(query, args)
     
 
@@ -111,16 +97,23 @@ def search(postvars):
 
 def parseTags(noteText, id):
     wordList = set(part[1:] for part in noteText.split() if part.startswith('#'))
-    query = "INSERT INTO Tags(tag) VALUES (%s);"
+    wordList = set(re.split(r'\W+', i)[0] for i in wordList)
+    insert_query = "INSERT INTO Tags(tag) VALUES (%s);"
+    check_query = "SELECT id FROM Tags WHERE tag = %s"
     for word in wordList:
+        if word == ' ' or word == '' or word is None:
+            continue
+        queryResult = db_query(check_query, [word])
+        tagID = None
+        if queryResult.rowcount >= 1:
+            tagID = int(queryResult.fetchone()[0])
+
         #Insert tag into database
         args = [word]
-        tagID = db_query_return_id(query, args)
+        if tagID is None:
+            tagID = db_query_return_id(insert_query, args)
 
         args = [id, tagID]
-        print "id: " + str(id)
-        print "tagID: " + str(tagID)
         #Update the NoteTags table
         db_query("INSERT INTO NoteTags(note, tag) VALUES (%s, %s)", args)
-        print "Tag: " + word
 
